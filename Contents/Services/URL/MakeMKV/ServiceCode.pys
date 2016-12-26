@@ -1,91 +1,28 @@
 def MetadataObjectForURL(url):
+	info = HTML.ElementFromURL(url).xpath('//tr/td')
+	id = int(info[1].text)
 	Log(url)
 	return VideoClipObject(
-		title = 'title',
-		summary = 'summary',
-		thumb = 'thumb',
+		title = 'title%d' % (id),
+		summary = '%s:%s' % (info[4].text, info[5].text),
+		thumb = '',
 	)
 ####################################################################################################
-# Here you will define the different types of videos available on this website and the values for their quality
-# You will need to search the source of the web pages that play a video to determine the type and location of videos offered thru the site
-# You can see if the name and location is available through an embed link, but you may have to look into the subpages for a web page
-# like javascript or style sheets to find this information. You will also need this information later when 
-# writing the code for the PlayVideo function that pulls these specific video files from the webpage
 def MediaObjectsForURL(url):
+	info = HTML.ElementFromURL(url).xpath('//tr/td')
 	return [
 
-# First you are calling a MediaObject() for each type of video the website offers using the MediaObject API command 
-# Most separate these types of videos by the resolution, for example a site may offer a high and low quality option for each video on its site
-# or they may offer an .flv format and an .mp4 format version of the video file. You can choose to only offer one type of video file 
-# or give the user the option of choosing the type of video file they want to use if there are several different types and qualities.
 		MediaObject(
-
-# Then within each MediaObject you define the values for that particular type of video
-# The options most used are video_codec, audio_codec, parts, container, video_resolution, audio_channels, and bitrate
-# See the Framework documentation API reference for a lists all possible attributes for MediaObject()
-# Audio Codecs are AAC and .MP3; Video Codecs are .H264; Container File Types are .MP4, .MKV, .MOV, and .AVI
-# And for audio channels stereo equals 2
-# I have found the best way to determine these attributes is to use VLC player and open the network stream URL of a few of the 
-# videos available on the site. And then use the tools to view the media information esp. codec info
-
 			video_codec = VideoCodec.H264,
 			container = Container.MKV,
-			parts = [PartObject(key=Callback(PlayVideo, url = url))]
+			parts = [PartObject(key=Callback(PlayVideo, url = info[11].xpath('//a/@href')[0]))]
 		)
 	]
 
 ####################################################################################################
-# Here we are defining the PlayVideo function we called in the callback function above. This function defines the pattern for 
-# the location and naming scheme of the video so we can play the video file directly. You use HTML request, regular expressions,
-# and predefined variables to create the path or http address of the video associated with the html or xml page that was sent 
-# to this service through the "URL" value. The programming here will vary greatly based on the location of the 
-# video file related to your video pages. This is where you will be doing the majority to the programming.
-# It is best to refer to other services already created for examples of how to pull the video file.
-
-# First we define the function taking the the variables for the url entered into the service and the
-# fmt variable we established above in MediaObjects
-
-# We add the @indirect decorator to the function definition to notify the client Plex app that the response from this callback
-# will be another ObjectContainer rather than a link to a media file. This works better for most clients as well as allowing for
-# more advanced practices such as using RTMP or including Cookies to be passed to the player.
-# The @indirect decorator is paired with the "IndirectResponse()" that is returned at the end of the function.
-# Note: if your MediaObject includes more than one PartObject, it is better to leave off the @indirect decorator and return a
-# Redirect() rather than the IndirectResponse().
 @indirect
 def PlayVideo(url):
-
-# Below I have included a basic example of how to program the PlayVideo function for pulling the video location on the web page 
-# whose URL was sent to the service and only has ONE video on the page. The code pulls the raw data from the web page 
-# using the URL and then uses a simple page search that returns an f4v video file url that is located in each html video page.
-# It uses both of the variables we established at the top of the service.
-# EXAMPLE:
-#  page = HTTP.Request(url).content
-# 	video = RE_VIDEO_URL.search(page).group('video_url') + ".f4v"
-#	video = BASE_URL + video
-# The example I chose to use for this function uses the optional xml video information file to pull the high and low
-# quality version of a video from the url sent to this URL service.
-# It basically pulls the content from the URL, looks through the page to find a mention of the regex value I defined as a 
-# global variable at the beginning of this document. Because the line of data I was using contained a parenthesis right before
-# the address, I had to get a little creative in pulling it and then replacing the ending single quote to properly pull
-# the xml address out of the page. The function then opens that xml video info page and uses xpath commands to extract the 
-# video URL and returns those values in the form of a high and low quality video. Then it uses the fmt variable to determine 
-# which of these videoss should be the value of video.
-	Log(url)
-
-	# We then return the address or value of the video.
-	# Since our example only has one PartObject in the MediaObject and we're using the @indirect decorator on this PlayVideo
-	# function, the proper way to return the video URL is via an IndirectResponse. The IndirectResponse() is a Plex Framework
-	# function which takes two (at least) arguments and acts as a shortcut for building an ObjectContainer to be returned. The first
-	# argument defines the type of the media object, in this case a VideoClipObject. Depending on the situation, other valid
-	# types could be PhotoObject, TrackObject, MovieObject, etc.
-	# The second argument is the "key" argument. In this example, the key is the direct link to the video. In some cases,
-	# the key may be set as a function, ie. key=RTMPVideoURL(args), or HTTPLiveStreamURL(args)
-	return IndirectResponse(VideoClipObject, key='http://127.0.0.1:51000/stream/title1.ts')
-	# The following line of code is commented out but remains as an example of an alternative method. There are instances where
-	# using @indirect/IndirectResponse() may not work, MediaObjects with multiple parts, for example. In such cases, the best
-	# alternative is to remove the @indirect decorator from the function definition and return the URL for the media file via
-	# a Redirect() instead. The Redirect() is a Plex Framework function that essentially tells the Client to look at this new URL
-	# for the actual media file.
+	return IndirectResponse(VideoClipObject, key=url)
 	'''
 	return Redirect(video)
 	'''
