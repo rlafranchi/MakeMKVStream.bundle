@@ -1,0 +1,14 @@
+[
+  {
+      "id": "host",
+      "type": "text",
+      "label": "Host",
+      "default": "localhost"
+  },
+  {
+      "id": "port",
+      "type": "text",
+      "label": "Port",
+      "default": "51000"
+  }
+]

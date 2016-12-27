@@ -1,6 +1,6 @@
 ###################################################################################################
 CHANNEL_NAME = "MakeMKV Stream"
-BASE_URL = "http://127.0.0.1:51000"
+BASE_URL = "http://%s:%s" % (Prefs['host'], Prefs['port'])
 
 ###################################################################################################
 def Start():
@@ -12,24 +12,31 @@ def Start():
 ####################################################################################################
 @handler('/video/makemkvstream', CHANNEL_NAME)
 def VideoMainMenu():
-  titles = HTML.ElementFromURL(BASE_URL + '/web/titles', cacheTime=1).xpath('//tr/td[2]') 
-  # values = html.xpath('.//table/tbody/tr/td[2]/text()')
-  # keys = html.xpath('.//table/tbody/tr/td[1]/text()')
-  # Log(html.xpath('.//table/tbody/tr/text()'))
-  # Log(html.xpath('//html/body/table')[0].text)
+  titles = HTML.ElementFromURL(BASE_URL + '/web/titles').xpath('//tr/td[2]') 
+  keys = HTML.ElementFromURL(BASE_URL + '/web/titles').xpath('//tr/td[1]') 
   title = titles[1].text
-  count = int(titles[2].text)
+
+  
+  count_index = 1
+  count_str = keys[count_index].text
+  while count_str != 'titlecount':
+    count_index += 1
+    count_str = keys[count_index].text
+
+  count = int(titles[count_index].text)
+  count_index += 1
 
   oc = ObjectContainer()
 
-  i = 3
-  while i < count + 3:
+  i = 0
+  while i < count:
     oc.add(VideoClipObject(
-      url = titles[i].xpath('.//a/@href')[0],
+      url = titles[count_index].xpath('.//a/@href')[0],
       summary = title,
-      title = titles[i].xpath('.//a')[0].text,
+      title = keys[count_index].text,
       thumb = '',
     ))
+    count_index += 1
     i += 1
 
   return oc
