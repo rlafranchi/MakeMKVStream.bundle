@@ -16,7 +16,7 @@
                         <array>
                             <!-- This string below is an example that allows any variation of the website's address to be entered -->
                             <!-- Where DOMAINNAME is the base address of the site like yahoo.com, youtube.com, etc. -->
-                            <string>http://.+</string> 		
+                            <string>http://localhost:51000</string> 		
                         </array>
       
             </dict>
